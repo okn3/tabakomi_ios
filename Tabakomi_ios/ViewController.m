@@ -16,12 +16,18 @@
 @synthesize locationManager;
 double reacent_lat;
 double reacent_lng;
+int count = 0;
 
 
 - (void)viewDidLoad {
     [super viewDidLoad];
-    // Do any additional setup after loading the view, typically from a nib.
-    //GPSの設定
+    
+    
+    // 背景をキリックしたら、キーボードを隠す
+    UITapGestureRecognizer *gestureRecognizer = [[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(closeSoftKeyboard)];
+    [self.view addGestureRecognizer:gestureRecognizer];
+
+    //GPSの認証
     if (nil == locationManager){
         locationManager = [[CLLocationManager alloc] init];
         if ([[[UIDevice currentDevice] systemVersion] floatValue] >= 8.0) {
@@ -34,40 +40,33 @@ double reacent_lng;
     locationManager.delegate = self;
     locationManager.desiredAccuracy = kCLLocationAccuracyBest; //誤差1
     locationManager.pausesLocationUpdatesAutomatically = NO; //15分以上でGPSログ停止を防ぐ
-    //    locationManager.distanceFilter = kCLDistanceFilterNone; // 更新間隔
+    //    locationManager.distanceFilter = kCLDistanceFilterNone; // 更新間隔(保留)
     [locationManager startUpdatingLocation];
     
-    //適期的にGPSの情報を取得
-    _timer = [NSTimer scheduledTimerWithTimeInterval:15 target:self selector:@selector(postGps:) userInfo:nil repeats:YES]; //テスト用60m
-
+    //定期更新
+    _timer = [NSTimer scheduledTimerWithTimeInterval:3 target:self selector:@selector(postGps:) userInfo:nil repeats:YES]; //テスト用60m
 }
 
+
 -(void)postGps:(NSTimer *)theTimer{
-    
 //    int user_id = 1;
-    int count;
     count++;
-//    
-//    [postGPS sendRequestGPS:(NSString *)user_id
-//                               data2:(float)reacent_lat
-//                               data3:(float)reacent_lng]; //DBにデータ送信
     _gps_view2.text = [NSString stringWithFormat: @"定期的に呼び出されてます! %d",count];
     NSLog(@"定期的に呼び出されてます! %d",count);
     NSLog(@"(定期GPS) lat:%.6f,lng:%.6f", reacent_lat, reacent_lng);
-    
 }
 
 // 常時GPS更新
 - (void)locationManager:(CLLocationManager *)manager didUpdateLocations:(NSArray *)locations {
     CLLocation* location = [locations lastObject];
-    
     reacent_lat = location.coordinate.latitude;
     reacent_lng = location.coordinate.longitude;
+    _gps_view.text = [NSString stringWithFormat:@"常時更新\n lat: %.6f lng: %.6f", reacent_lat,reacent_lng];
+}
 
-    _gps_view.text = [NSString stringWithFormat:@"lat: %.6f lng: %.6f", reacent_lat,reacent_lng];
-
-    //    NSLog(@"speed----%@",speed_ary);
-    //    NSLog(@" 緯度 %+.6f, 経度 %+.6f ,速度 %@ \n", location.coordinate.latitude, location.coordinate.longitude,reacent_speed);
+// キーボードを隠す処理
+- (void)closeSoftKeyboard {
+    [self.view endEditing: YES];
 }
 
 - (void)didReceiveMemoryWarning {
